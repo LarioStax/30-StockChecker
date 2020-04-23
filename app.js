@@ -4,6 +4,7 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const expect = require("chai").expect;
+const mongoose = require("mongoose");
 
 const apiRoutes = require("./routes/api.js");
 const fccTestingRoutes = require("./routes/fcctesting.js");
@@ -16,6 +17,16 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 const cors = require("cors");
 app.use(cors({origin: "*"})); //For FCC testing
+
+mongoose.connect(process.env.DATABASE, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false
+})
+
+mongoose.connection.on("connected", function() {
+    console.log("Mongoose connected to the database!")
+})
 
 //Index page (static HTML)
 app.route('/')
