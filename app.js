@@ -6,10 +6,19 @@ const bodyParser = require("body-parser");
 const expect = require("chai").expect;
 const mongoose = require("mongoose");
 const dotenv = require("dotenv").config();
+const helmet = require("helmet");
 
 const apiRoutes = require("./routes/api.js");
 const fccTestingRoutes = require("./routes/fcctesting.js");
 const runner = require("./test-runner.js");
+
+app.use(helmet());
+app.use(helmet.contentSecurityPolicy({
+    directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'"]
+    }
+}))
 
 app.use("/public", express.static(process.cwd() + "/public"));
 
