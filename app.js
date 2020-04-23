@@ -5,6 +5,7 @@ const app = express();
 const bodyParser = require("body-parser");
 const expect = require("chai").expect;
 const mongoose = require("mongoose");
+const dotenv = require("dotenv").config();
 
 const apiRoutes = require("./routes/api.js");
 const fccTestingRoutes = require("./routes/fcctesting.js");
