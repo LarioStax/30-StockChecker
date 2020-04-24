@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
 const stockSchema = new mongoose.Schema({
-    likedByIP: [String],
-    likes: 0
+    stockName: String,
+    likedByIP: [String]
 })
 
 let Stock = mongoose.model("Stock, stockSchema");
