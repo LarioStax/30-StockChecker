@@ -23,9 +23,14 @@ function fetchStockData (stockSymbol, like, ip, res) {
   axios.get(createURL(stockSymbol))
   .then(function (response) {
     let stockData = response.data;
-    findAndUpdateStock(stockData, null, null, res)
+    if (stockData == "Unknown symbol" || stockData == "Invalid symbol" || stockData == null) {
+      return res.json("No stock found with provided symbol!");
+    } else {
+      findAndUpdateStock(stockData, null, null, res)
+    }  
   })
   .catch(function (error) {
+    console.log("Axios error:");
     console.log(error);
   });
 }
@@ -52,6 +57,7 @@ function findAndUpdateStock (stockData, like, ip, res) {
           }
           let returnObject = {
             "stock": foundStock.stockSymbol,
+            "company": stockData.companyName ? stockData.companyName : "No company name found!",
             "price": stockData[stockData.calculationPrice],
             "likes": foundStock.likedByIP.length
           }
