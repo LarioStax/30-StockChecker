@@ -15,16 +15,24 @@ const Stock = require("../models/Stock.js");
 
 module.exports = function (app) {
 
+function createURL (stockSymbol) {
+  return `https://repeated-alpaca.glitch.me/v1/stock/${stockSymbol}/quote`;
+} 
+
+function fetchStockData (stockSymbol, like, ip, res) {
+  axios.get(createURL(stockSymbol))
+  .then(function (response) {
+    let stockData = response.data;
+    res.json(stockData);
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
+}
+
   app.route('/api/stock-prices')
     .get(function (req, res){
-      axios.get("https://repeated-alpaca.glitch.me/v1/stock/GOOG/quote")
-      .then(function (response) {
-        res.json(response);
-      })
-      .catch(function (error) {
-        console.log(error);
-      })
-     
+      fetchStockData(req.query.stock, null, null, res);
     });
     
 };
