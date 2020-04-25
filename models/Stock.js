@@ -5,6 +5,6 @@ const stockSchema = new mongoose.Schema({
     likedByIP: [String]
 })
 
-let Stock = mongoose.model("Stock, stockSchema");
+let Stock = mongoose.model("Stock", stockSchema);
 
 module.exports = Stock;
