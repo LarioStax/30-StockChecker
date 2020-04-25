@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const stockSchema = new mongoose.Schema({
     stockName: String,
+    stockSymbol: String,
     likedByIP: [String]
 })
 
