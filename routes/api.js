@@ -23,11 +23,43 @@ function fetchStockData (stockSymbol, like, ip, res) {
   axios.get(createURL(stockSymbol))
   .then(function (response) {
     let stockData = response.data;
-    res.json(stockData);
+    findAndUpdateStock(stockData, null, null, res)
   })
   .catch(function (error) {
     console.log(error);
   });
+}
+
+function findAndUpdateStock (stockData, like, ip, res) {
+  let conditions = {stockSymbol: stockData.symbol}
+  let update = {};
+  let options = {
+    upsert: true,
+    setDefaultsOnInsert: true,
+    new: true
+  }
+  Stock.findOneAndUpdate(conditions, update, options, function(err, updatedStock) {
+    if (err) {
+      console.log(err);
+    } else {
+      Stock.findOne(conditions, function(err, foundStock) {
+        if (err) {
+          console.log(err);
+        } else {
+          if (like == "true" && foundStock.likedByIP.indexOf(ip) < 0) {
+            foundStock.likedByIP.push(ip);
+            foundStock.save();
+          }
+          let returnObject = {
+            "stock": foundStock.stockSymbol,
+            "price": stockData[stockData.calculationPrice],
+            "likes": foundStock.likedByIP.length
+          }
+          res.json(returnObject)
+        }
+      })
+    }
+  })
 }
 
   app.route('/api/stock-prices')
