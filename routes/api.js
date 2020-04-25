@@ -8,10 +8,9 @@
 
 'use strict';
 
-var expect = require('chai').expect;
-var MongoClient = require('mongodb');
+const expect = require('chai').expect;
 
-const CONNECTION_STRING = process.env.DB; //MongoClient.connect(CONNECTION_STRING, function(err, db) {});
+const Stock = require("../models/Stock.js");
 
 module.exports = function (app) {
 
