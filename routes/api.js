@@ -19,13 +19,23 @@ function createURL (stockSymbol) {
   return `https://repeated-alpaca.glitch.me/v1/stock/${stockSymbol}/quote`;
 } 
 
-function fetchStockData (stockSymbol, like, ip, res) {
+// function fetchPromise(stockSymbol, like, ip, res) {
+//   return new Promise( function (resolve, reject) {
+//     fetchStockData(stockSymbol, like, ip, res, function (returned) {
+//       resolve(returned); 
+//     })
+//   })
+// }
+
+async function fetchStockData (stockSymbol, like, ip, res) {
+  console.log(2);
   axios.get(createURL(stockSymbol))
   .then(function (response) {
     let stockData = response.data;
     if (stockData == "Unknown symbol" || stockData == "Invalid symbol" || stockData == null) {
       return res.json("No stock found with provided symbol!");
     } else {
+      console.log(3);
       findAndUpdateStock(stockData, like, ip, res)
     }  
   })
@@ -35,7 +45,7 @@ function fetchStockData (stockSymbol, like, ip, res) {
   });
 }
 
-function findAndUpdateStock (stockData, like, ip, res) {
+async function findAndUpdateStock (stockData, like, ip, res) {
   let conditions = {stockSymbol: stockData.symbol}
   let update = {};
   let options = {
@@ -43,11 +53,14 @@ function findAndUpdateStock (stockData, like, ip, res) {
     setDefaultsOnInsert: true,
     new: true
   }
+  let returnObject = {};
+  console.log(4);
   Stock.findOneAndUpdate(conditions, update, options, function(err, updatedStock) {
     if (err) {
       console.log(err);
     } else {
       Stock.findOne(conditions, function(err, foundStock) {
+        console.log(5);
         if (err) {
           console.log(err);
         } else {
@@ -55,17 +68,23 @@ function findAndUpdateStock (stockData, like, ip, res) {
             foundStock.likedByIP.push(ip);
             foundStock.save();
           }
-          let returnObject = {
+          console.log(6);
+          returnObject = {
             "stock": foundStock.stockSymbol,
             "company": stockData.companyName ? stockData.companyName : "No company name found!",
             "price": stockData[stockData.calculationPrice],
             "likes": foundStock.likedByIP.length
           }
           // console.log(foundStock.likedByIP)
-          res.json(returnObject)
+          // res.json(returnObject);
         }
       })
+      .then( function() {
+        console.log(7);
+        return returnObject;
+      })
     }
+
   })
 }
 
@@ -92,9 +111,31 @@ function findAndUpdateStock (stockData, like, ip, res) {
           if (err) {
             console.log(err)
           } else {
-            return res.json(foundStocks);
+            return res.json({"stockData": foundStocks});
           }
         });
+      }
+      //if one stock query
+      if (typeof stockSymbol === "string") {
+        console.log(1);
+        let returnObject = fetchStockData(stockSymbol, like, ip, res);
+        console.log(8);
+        console.log(returnObject);
+        // async function getReturnObject() {
+        //   try {
+        //     console.log("got here");
+        //     let returnedObject = await fetchPromise(stockSymbol, like, ip, res);
+        //     console.log(returnedObject);
+        //   } catch(error) {
+        //     console.log(error);
+        //   }
+        // }
+        // getReturnObject(stockSymbol, like, ip, res)
+
+        // let returnObject = yield wait.for (fetchStockData(stockSymbol, like, ip, res))
+        // console.log(returnObject);
+        // console.log(returnObject);
+        // res.json({stockData: returnObject })
       } else {
         fetchStockData(stockSymbol, like, ip, res);
       }
