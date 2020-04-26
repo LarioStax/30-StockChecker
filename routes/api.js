@@ -15,87 +15,84 @@ const Stock = require("../models/Stock.js");
 
 module.exports = function (app) {
 
-function createURL (stockSymbol) {
-  return `https://repeated-alpaca.glitch.me/v1/stock/${stockSymbol}/quote`;
-} 
-
-// function fetchPromise(stockSymbol, like, ip, res) {
-//   return new Promise( function (resolve, reject) {
-//     fetchStockData(stockSymbol, like, ip, res, function (returned) {
-//       resolve(returned); 
-//     })
-//   })
-// }
-
-async function fetchStockData (stockSymbol, like, ip, res) {
-  console.log(2);
-  axios.get(createURL(stockSymbol))
-  .then(function (response) {
-    let stockData = response.data;
-    if (stockData == "Unknown symbol" || stockData == "Invalid symbol" || stockData == null) {
-      return res.json("No stock found with provided symbol!");
-    } else {
-      console.log(3);
-      findAndUpdateStock(stockData, like, ip, res)
-    }  
-  })
-  .catch(function (error) {
-    console.log("Axios error:");
-    console.log(error);
-  });
-}
-
-async function findAndUpdateStock (stockData, like, ip, res) {
-  let conditions = {stockSymbol: stockData.symbol}
-  let update = {};
-  let options = {
-    upsert: true,
-    setDefaultsOnInsert: true,
-    new: true
+  function createURL(stockSymbol) {
+    return encodeURI(`https://repeated-alpaca.glitch.me/v1/stock/${stockSymbol}/quote`);
   }
-  let returnObject = {};
-  console.log(4);
-  Stock.findOneAndUpdate(conditions, update, options, function(err, updatedStock) {
-    if (err) {
-      console.log(err);
-    } else {
-      Stock.findOne(conditions, function(err, foundStock) {
-        console.log(5);
+
+  function fetchStockData(stockSymbol, like, ip, res) {
+    console.log("Number 2");
+    console.log("stockSymbol: " + stockSymbol)
+    return new Promise(function (resolve, reject) {
+      axios.get(createURL(stockSymbol))
+        .then(function (response) {
+          let stockData = response.data;
+          if (stockData == "Unknown symbol" || stockData == "Invalid symbol" || stockData == null) {
+            reject("No stock found with provided symbol!");
+          } else {
+            console.log("Number 3");
+            findAndUpdateStock(stockData, like, ip, res).then(function (returnObject) {
+
+              resolve(returnObject);
+            }).catch(function (error) {
+              console.log(error.response);
+              reject("There was a problem with getting your requested stock!");
+            });
+          }
+        })
+    })
+  }
+
+  function findAndUpdateStock(stockData, like, ip, res) {
+    console.log("Number 4");
+    let conditions = { stockSymbol: stockData.symbol }
+    let update = {};
+    let options = {
+      upsert: true,
+      setDefaultsOnInsert: true,
+      new: true
+    }
+    let returnObject = {};
+
+    return new Promise(function (resolve, reject) {
+      console.log("Number 5");
+      Stock.findOneAndUpdate(conditions, update, options, function (err, updatedStock) {
         if (err) {
-          console.log(err);
+          reject("Error while searching/creating the requested stock in database!");
         } else {
-          if (like == "true" && foundStock.likedByIP.indexOf(ip) < 0) {
-            foundStock.likedByIP.push(ip);
-            foundStock.save();
-          }
-          console.log(6);
-          returnObject = {
-            "stock": foundStock.stockSymbol,
-            "company": stockData.companyName ? stockData.companyName : "No company name found!",
-            "price": stockData[stockData.calculationPrice],
-            "likes": foundStock.likedByIP.length
-          }
-          // console.log(foundStock.likedByIP)
-          // res.json(returnObject);
+          Stock.findOne(conditions, function (err, foundStock) {
+            if (err) {
+              console.log(err);
+            } else {
+              console.log("Number 6");
+              if (like == "true" && foundStock.likedByIP.indexOf(ip) < 0) {
+                foundStock.likedByIP.push(ip);
+                foundStock.save();
+              }
+              returnObject = {
+                "stock": foundStock.stockSymbol,
+                "company": stockData.companyName ? stockData.companyName : "No company name found!",
+                "price": stockData[stockData.calculationPrice],
+                "likes": foundStock.likedByIP.length
+              }
+              console.log("Number 7");
+              resolve(returnObject);
+            }
+          }).catch(function (error) {
+            reject(error);
+          });
         }
       })
-      .then( function() {
-        console.log(7);
-        return returnObject;
-      })
-    }
-
-  })
-}
+    })
+  }
 
   app.route('/api/stock-prices')
-    .get(function (req, res){
+    .get(function (req, res) {
       const stockSymbol = req.query.stock;
       const like = (req.query.like == "true") ? "true" : "false";
       // const ip = req.ip //express => does it always work? why is it not most popular answer on stackoverflow?
       // const ip = (req.headers["x-forwarded-for"]) ? req.headers["x-forwarded-for"].split(",")[0] : req.connection.remoteAddress
       const ip = (req.headers['x-forwarded-for'] || '').split(',').pop() || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress; //from stackoverflow
-      
+
       //if no stock query => return all already searched stocks in db
       if (!stockSymbol) {
         Stock.aggregate([
@@ -103,42 +100,32 @@ async function findAndUpdateStock (stockData, like, ip, res) {
             $project: {
               _id: 0,
               stockSymbol: 1,
-              likes: {$size: "$likedByIP"}
+              likes: { $size: "$likedByIP" }
             }
           }
         ])
-        .exec(function (err, foundStocks) {
-          if (err) {
-            console.log(err)
-          } else {
-            return res.json({"stockData": foundStocks});
-          }
-        });
+          .exec(function (err, foundStocks) {
+            if (err) {
+              console.log(err)
+            } else {
+              return res.json({ "stockData": foundStocks });
+            }
+          });
       }
-      //if one stock query
-      if (typeof stockSymbol === "string") {
-        console.log(1);
-        let returnObject = fetchStockData(stockSymbol, like, ip, res);
-        console.log(8);
-        console.log(returnObject);
-        // async function getReturnObject() {
-        //   try {
-        //     console.log("got here");
-        //     let returnedObject = await fetchPromise(stockSymbol, like, ip, res);
-        //     console.log(returnedObject);
-        //   } catch(error) {
-        //     console.log(error);
-        //   }
-        // }
-        // getReturnObject(stockSymbol, like, ip, res)
 
-        // let returnObject = yield wait.for (fetchStockData(stockSymbol, like, ip, res))
-        // console.log(returnObject);
-        // console.log(returnObject);
-        // res.json({stockData: returnObject })
-      } else {
-        fetchStockData(stockSymbol, like, ip, res);
+      if (typeof stockSymbol === "string" && stockSymbol.length > 0) { //avoids handling empty string
+        console.log("Number 1");
+        fetchStockData(stockSymbol, like, ip, res)
+          .then(function (returnedObject) {
+            return res.json(returnedObject);
+          }).catch(function (error) {
+            console.log("Number 8");
+            console.log(error);
+            return res.json(error);
+            // console.log(error);
+          })
       }
+
     });
-    
+
 };
