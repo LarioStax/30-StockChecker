@@ -113,17 +113,99 @@ module.exports = function (app) {
           });
       }
 
+      //handler for one stock in query
       if (typeof stockSymbol === "string" && stockSymbol.length > 0) { //avoids handling empty string
         console.log("Number 1");
         fetchStockData(stockSymbol, like, ip, res)
           .then(function (returnedObject) {
-            return res.json({"stockData": returnedObject});
+            return res.json({ "stockData": returnedObject });
           }).catch(function (error) {
             console.log("Number 8");
             console.log(error);
             return res.json(error);
             // console.log(error);
           })
+      }
+
+      //handler for two stocks in query
+      if (typeof stockSymbol === "object" && stockSymbol.length === 2) {
+        let stockData = [];
+
+        async function getTwoStocks(stockSymbol, like, ip, res) {
+          const firstStock = await fetchStockData(stockSymbol[0], like, ip, res);
+          const secondStock = await fetchStockData(stockSymbol[1], like, ip, res)
+
+          let firstData = {
+            stock: firstStock.stock,
+            company: firstStock.company,
+            price: firstStock.price,
+            rel_likes: firstStock.likes - secondStock.likes
+          }
+          console.log("firstData");
+          console.log(firstData);
+          stockData.push(firstData);
+
+          let secondData = {
+            stock: secondStock.stock,
+            company: secondStock.company,
+            price: secondStock.price,
+            rel_likes: secondStock.likes - firstStock.likes
+          }
+          console.log("secondData");
+          console.log(secondData);
+          stockData.push(secondData);
+          console.log("stockData");
+          console.log(stockData);
+          return res.json(stockData);
+        }
+
+        getTwoStocks(stockSymbol, like, ip, res);
+
+        console.log("stockData");
+        console.log(stockData);
+
+        //Get first stock!
+        // fetchStockData(stockSymbol[0], like, ip, res)
+        // .then(function (returnedObject) {
+        //   returnData = {
+        //     stock: returnedObject.stock,
+        //     company: returnedObject.company,
+        //     price: returnedObject.price,
+        //     rel_likes: returnedObject.likes
+        //   }
+        //   stockData.push(returnData);
+        //   console.log("first stock");
+        //   console.log(stockData);
+        // }).catch(function (error) {
+        //   console.log(error);
+        //   return res.json(error);
+        // })
+
+        // //Get second stock!
+        // fetchStockData(stockSymbol[1], like, ip, res)
+        // .then(function (returnedObject) {
+        //   console.log("second stock");
+        //   console.log(stockData);
+        //   console.log(stockData[0]);
+        //   console.log(stockData[0].rel_likes);
+        //   returnData = {
+        //     stock: returnedObject.stock,
+        //     company: returnedObject.company,
+        //     price: returnedObject.price,
+        //     rel_likes: returnedObject.likes - stockData[0].rel_likes //assign relative likes in comparison to first stock
+        //   }
+        //   //Calculate relative likes of the first stock compared to the second stock
+        //   console.log("defined");
+        //   stockData[0].rel_likes -= returnedObject.likes
+        //   stockData.push(returnData);
+          
+        //   return res.json(stockData);
+        // }).catch(function (error) {
+        //   console.log(error);
+        //   return res.json(error);
+        // })
+
+
       }
 
     });
