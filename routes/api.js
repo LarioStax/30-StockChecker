@@ -85,6 +85,16 @@ module.exports = function (app) {
     })
   }
 
+  async function getTwoStocks(stockSymbol, like, ip, res) {
+    const firstStock = await fetchStockData(stockSymbol[0], like, ip, res);
+    const secondStock = await fetchStockData(stockSymbol[1], like, ip, res);
+
+    let returnStocks = [];
+    returnStocks.push(firstStock);
+    returnStocks.push(secondStock);
+    return returnStocks;
+  }
+
   app.route('/api/stock-prices')
     .get(function (req, res) {
       const stockSymbol = req.query.stock;
@@ -131,83 +141,28 @@ module.exports = function (app) {
       if (typeof stockSymbol === "object" && stockSymbol.length === 2) {
         let stockData = [];
 
-        async function getTwoStocks(stockSymbol, like, ip, res) {
-          const firstStock = await fetchStockData(stockSymbol[0], like, ip, res);
-          const secondStock = await fetchStockData(stockSymbol[1], like, ip, res)
+        getTwoStocks(stockSymbol, like, ip, res)
+          .then(function (returnedStocks) {
 
-          let firstData = {
-            stock: firstStock.stock,
-            company: firstStock.company,
-            price: firstStock.price,
-            rel_likes: firstStock.likes - secondStock.likes
-          }
-          console.log("firstData");
-          console.log(firstData);
-          stockData.push(firstData);
+            let firstStockData = {
+              stock: returnedStocks[0].stock,
+              company: returnedStocks[0].company,
+              price: returnedStocks[0].price,
+              rel_likes: returnedStocks[0].likes - returnedStocks[1].likes
+            }
+            stockData.push(firstStockData);
 
-          let secondData = {
-            stock: secondStock.stock,
-            company: secondStock.company,
-            price: secondStock.price,
-            rel_likes: secondStock.likes - firstStock.likes
-          }
-          console.log("secondData");
-          console.log(secondData);
-          stockData.push(secondData);
-          console.log("stockData");
-          console.log(stockData);
-          return res.json(stockData);
-        }
-
-        getTwoStocks(stockSymbol, like, ip, res);
-
-        console.log("stockData");
-        console.log(stockData);
-
-        //Get first stock!
-        // fetchStockData(stockSymbol[0], like, ip, res)
-        // .then(function (returnedObject) {
-        //   returnData = {
-        //     stock: returnedObject.stock,
-        //     company: returnedObject.company,
-        //     price: returnedObject.price,
-        //     rel_likes: returnedObject.likes
-        //   }
-        //   stockData.push(returnData);
-        //   console.log("first stock");
-        //   console.log(stockData);
-        // }).catch(function (error) {
-        //   console.log(error);
-        //   return res.json(error);
-        // })
-
-        // //Get second stock!
-        // fetchStockData(stockSymbol[1], like, ip, res)
-        // .then(function (returnedObject) {
-        //   console.log("second stock");
-        //   console.log(stockData);
-        //   console.log(stockData[0]);
-        //   console.log(stockData[0].rel_likes);
-        //   returnData = {
-        //     stock: returnedObject.stock,
-        //     company: returnedObject.company,
-        //     price: returnedObject.price,
-        //     rel_likes: returnedObject.likes - stockData[0].rel_likes //assign relative likes in comparison to first stock
-        //   }
-        //   //Calculate relative likes of the first stock compared to the second stock
-        //   console.log("defined");
-        //   stockData[0].rel_likes -= returnedObject.likes
-        //   stockData.push(returnData);
-          
-        //   return res.json(stockData);
-        // }).catch(function (error) {
-        //   console.log(error);
-        //   return res.json(error);
-        // })
-
-
+            let secondStockData = {
+              stock: returnedStocks[1].stock,
+              company: returnedStocks[1].company,
+              price: returnedStocks[1].price,
+              rel_likes: returnedStocks[1].likes - returnedStocks[0].likes
+            }
+            stockData.push(secondStockData);
+            console.log("stockData");
+            console.log(stockData);
+            return res.json(stockData);
+          });
       }
-
     });
-
 };
