@@ -117,7 +117,7 @@ module.exports = function (app) {
         console.log("Number 1");
         fetchStockData(stockSymbol, like, ip, res)
           .then(function (returnedObject) {
-            return res.json(returnedObject);
+            return res.json({"stockData": returnedObject});
           }).catch(function (error) {
             console.log("Number 8");
             console.log(error);
