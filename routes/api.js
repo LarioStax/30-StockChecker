@@ -26,7 +26,7 @@ function fetchStockData (stockSymbol, like, ip, res) {
     if (stockData == "Unknown symbol" || stockData == "Invalid symbol" || stockData == null) {
       return res.json("No stock found with provided symbol!");
     } else {
-      findAndUpdateStock(stockData, null, null, res)
+      findAndUpdateStock(stockData, like, ip, res)
     }  
   })
   .catch(function (error) {
@@ -61,6 +61,7 @@ function findAndUpdateStock (stockData, like, ip, res) {
             "price": stockData[stockData.calculationPrice],
             "likes": foundStock.likedByIP.length
           }
+          // console.log(foundStock.likedByIP)
           res.json(returnObject)
         }
       })
@@ -70,7 +71,33 @@ function findAndUpdateStock (stockData, like, ip, res) {
 
   app.route('/api/stock-prices')
     .get(function (req, res){
-      fetchStockData(req.query.stock, null, null, res);
+      const stockSymbol = req.query.stock;
+      const like = (req.query.like == "true") ? "true" : "false";
+      // const ip = req.ip //express => does it always work? why is it not most popular answer on stackoverflow?
+      // const ip = (req.headers["x-forwarded-for"]) ? req.headers["x-forwarded-for"].split(",")[0] : req.connection.remoteAddress
+      const ip = (req.headers['x-forwarded-for'] || '').split(',').pop() || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress; //from stackoverflow
+      
+      //if no stock query => return all already searched stocks in db
+      if (!stockSymbol) {
+        Stock.aggregate([
+          {
+            $project: {
+              _id: 0,
+              stockSymbol: 1,
+              likes: {$size: "$likedByIP"}
+            }
+          }
+        ])
+        .exec(function (err, foundStocks) {
+          if (err) {
+            console.log(err)
+          } else {
+            return res.json(foundStocks);
+          }
+        });
+      } else {
+        fetchStockData(stockSymbol, like, ip, res);
+      }
     });
     
 };
