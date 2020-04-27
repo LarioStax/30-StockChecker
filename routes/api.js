@@ -151,7 +151,7 @@ module.exports = function (app) {
               rel_likes: returnedStocks[1].likes - returnedStocks[0].likes
             }
             stockData.push(secondStockData);
-            return res.json(stockData);
+            return res.json({stockData: stockData});
           });
       }
 
