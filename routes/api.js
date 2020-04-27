@@ -19,6 +19,7 @@ module.exports = function (app) {
     return encodeURI(`https://repeated-alpaca.glitch.me/v1/stock/${stockSymbol}/quote`);
   }
 
+  //Does the API request to get the stock data and calls the db function
   function fetchStockData(stockSymbol, like, ip, res) {
     console.log("Number 2");
     console.log("stockSymbol: " + stockSymbol)
@@ -55,10 +56,12 @@ module.exports = function (app) {
 
     return new Promise(function (resolve, reject) {
       console.log("Number 5");
+      //Searches for requested stock in DB and creates it if not found
       Stock.findOneAndUpdate(conditions, update, options, function (err, updatedStock) {
         if (err) {
           reject("Error while searching/creating the requested stock in database!");
         } else {
+          //Searches for requested (and maybe newly created) stock in db
           Stock.findOne(conditions, function (err, foundStock) {
             if (err) {
               console.log(err);
@@ -163,6 +166,11 @@ module.exports = function (app) {
             console.log(stockData);
             return res.json(stockData);
           });
+      }
+
+      //handler for more than two stocks in query
+      if (typeof stockSymbol === "object" && stockSymbol.length > 2) {
+        return res.json("Please, request max two stocks at a time.")
       }
     });
 };
