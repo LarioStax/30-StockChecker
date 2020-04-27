@@ -22,9 +22,11 @@ suite('Functional Tests', function() {
         .get('/api/stock-prices')
         .query({stock: 'goog'})
         .end(function(err, res){
-          
-          //complete this one too
-          
+          assert.equal(res.status, 200);
+          assert.equal(typeof res.body, "object");
+          assert.equal(res.body.stockData.stock, "GOOG");
+          assert.isAtLeast(res.body.stockData.likes, 0);
+          assert.isAtLeast(res.body.stockData.price, 0);        
           done();
         });
       });
