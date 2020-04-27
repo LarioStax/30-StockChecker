@@ -13,6 +13,7 @@ var server = require('../app.js');
 
 chai.use(chaiHttp);
 
+
 suite('Functional Tests', function() {
     
     suite('GET /api/stock-prices => stockData object', function() {
@@ -32,7 +33,17 @@ suite('Functional Tests', function() {
       });
       
       test('1 stock with like', function(done) {
-        
+        chai.request(server)
+        .get("/api/stock-prices")
+        .query({stock: "goog", likes: "true"})
+        .end(function(err, res) {
+          assert.equal(res.status, 200);
+          assert.equal(typeof res.body, "object");
+          assert.equal(res.body.stockData.stock, "GOOG");
+          assert.isAtLeast(res.body.stockData.likes, 1);
+          assert.isAtLeast(res.body.stockData.price, 0);      
+          done();
+        })
       });
       
       test('1 stock with like again (ensure likes arent double counted)', function(done) {
