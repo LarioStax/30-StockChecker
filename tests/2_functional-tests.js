@@ -75,13 +75,31 @@ suite('Functional Tests', function () {
           assert.equal(res.body.stockData[1].stock, "MSFT");
           assert.exists(res.body.stockData[1].rel_likes, "Not null or undefined");
           assert.isAtLeast(res.body.stockData[1].price, 0);
-          msftLikes = res.body.stockData[1].likes;
+          googLikes = res.body.stockData[0].rel_likes;
+          msftLikes = res.body.stockData[1].rel_likes;
+          console.log(res.body);
           done()
         });
       });
 
       test('2 stocks with like', function (done) {
-
+        chai.request(server)
+        .get("/api/stock-prices")
+        .query({ stock: ["goog", "msft"], like: "true" })
+        .end(function (err, res) {
+          assert.equal(res.status, 200);
+          assert.equal(res.body.stockData[0].stock, "GOOG");
+          assert.exists(res.body.stockData[0].rel_likes, "Not null or undefined");
+          assert.equal(res.body.stockData[0].rel_likes, googLikes);
+          assert.isAtLeast(res.body.stockData[0].price, 0);
+          assert.equal(res.body.stockData[1].stock, "MSFT");
+          assert.exists(res.body.stockData[1].rel_likes, "Not null or undefined");
+          assert.equal(res.body.stockData[1].rel_likes, msftLikes);
+          assert.isAtLeast(res.body.stockData[1].price, 0);
+          msftLikes = res.body.stockData[1].likes;
+          console.log(res.body);
+          done()
+        });
       });
 
     });
