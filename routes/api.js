@@ -21,8 +21,6 @@ module.exports = function (app) {
 
   //Does the API request to get the stock data and calls the db function
   function fetchStockData(stockSymbol, like, ip, res) {
-    console.log("Number 2");
-    console.log("stockSymbol: " + stockSymbol)
     return new Promise(function (resolve, reject) {
       axios.get(createURL(stockSymbol))
         .then(function (response) {
@@ -30,9 +28,7 @@ module.exports = function (app) {
           if (stockData == "Unknown symbol" || stockData == "Invalid symbol" || stockData == null) {
             reject("No stock found with provided symbol!");
           } else {
-            console.log("Number 3");
             findAndUpdateStock(stockData, like, ip, res).then(function (returnObject) {
-
               resolve(returnObject);
             }).catch(function (error) {
               console.log(error.response);
@@ -44,7 +40,6 @@ module.exports = function (app) {
   }
 
   function findAndUpdateStock(stockData, like, ip, res) {
-    console.log("Number 4");
     let conditions = { stockSymbol: stockData.symbol }
     let update = {};
     let options = {
@@ -55,7 +50,6 @@ module.exports = function (app) {
     let returnObject = {};
 
     return new Promise(function (resolve, reject) {
-      console.log("Number 5");
       //Searches for requested stock in DB and creates it if not found
       Stock.findOneAndUpdate(conditions, update, options, function (err, updatedStock) {
         if (err) {
@@ -66,7 +60,6 @@ module.exports = function (app) {
             if (err) {
               console.log(err);
             } else {
-              console.log("Number 6");
               if (like == "true" && foundStock.likedByIP.indexOf(ip) < 0) {
                 foundStock.likedByIP.push(ip);
                 foundStock.save();
@@ -77,7 +70,6 @@ module.exports = function (app) {
                 "price": stockData[stockData.calculationPrice],
                 "likes": foundStock.likedByIP.length
               }
-              console.log("Number 7");
               resolve(returnObject);
             }
           }).catch(function (error) {
@@ -128,15 +120,12 @@ module.exports = function (app) {
 
       //handler for one stock in query
       if (typeof stockSymbol === "string" && stockSymbol.length > 0) { //avoids handling empty string
-        console.log("Number 1");
         fetchStockData(stockSymbol, like, ip, res)
           .then(function (returnedObject) {
             return res.json({ "stockData": returnedObject });
           }).catch(function (error) {
-            console.log("Number 8");
             console.log(error);
             return res.json(error);
-            // console.log(error);
           })
       }
 
@@ -162,8 +151,6 @@ module.exports = function (app) {
               rel_likes: returnedStocks[1].likes - returnedStocks[0].likes
             }
             stockData.push(secondStockData);
-            console.log("stockData");
-            console.log(stockData);
             return res.json(stockData);
           });
       }
