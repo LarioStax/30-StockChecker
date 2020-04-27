@@ -67,7 +67,7 @@ module.exports = function (app) {
               returnObject = {
                 "stock": foundStock.stockSymbol,
                 "company": stockData.companyName ? stockData.companyName : "No company name found!",
-                "price": stockData[stockData.calculationPrice],
+                "price": stockData[stockData.calculationPrice] ? stockData[stockData.calculationPrice] : stockData.latestPrice,
                 "likes": foundStock.likedByIP.length
               }
               resolve(returnObject);
